@@ -451,7 +451,7 @@
         <li>『The Voice Of Korea Season 2』出演、バトルラウンド進出</li>
         <li>デュエット音源『私に似ている君』リリース</li>
       </ul>
-      <p class="t-sub">レッスンは<span id="teacherDays">火曜〜土曜</span> / 16:00〜22:00（19:30〜20:00は休憩）</p>
+      <p class="t-sub">レッスンは<span id="teacherDays">火曜〜土曜</span> / 16:00〜22:00（土曜は15:00〜21:00・19:30〜20:00は休憩）</p>
     </div>
   </div>
 
@@ -485,7 +485,7 @@
   <section>
     <div class="section-head">
       <p class="section-title"><span class="step-num">STEP 3</span>時間枠を選択</p>
-      <p class="section-note">16:00〜22:00（19:30〜20:00休憩）</p>
+      <p class="section-note">火〜金 16:00〜22:00 / 土 15:00〜21:00（19:30〜20:00休憩）</p>
     </div>
     <div class="slot-grid" id="slotGrid"></div>
     <p class="empty-note" id="emptyNote" style="display:none;">この曜日には空き枠がありません。他の曜日をお選びください。</p>
@@ -575,12 +575,15 @@
 })();
 
 // ▼ ここにGoogle Apps ScriptのウェブアプリURLを貼り付けてください
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbwOdNva0FLY1-YLKbtHiegLVcRiNwmVLjpGCltgZwgRN8DlwaxteiZvNw-bAeRq5ig/exec';
+var GAS_URL = 'PASTE_YOUR_APPS_SCRIPT_URL_HERE';
 
 var OPEN_MIN = 16*60;
 var CLOSE_MIN = 22*60;
 var BREAK_START = 19*60 + 30;
 var BREAK_END = 20*60;
+var HOURS_BY_DAY = { sat: { open: 15*60, close: 21*60 } };
+function openMinFor(day){ return (HOURS_BY_DAY[day] && HOURS_BY_DAY[day].open) || OPEN_MIN; }
+function closeMinFor(day){ return (HOURS_BY_DAY[day] && HOURS_BY_DAY[day].close) || CLOSE_MIN; }
 var STEP = 30;
 
 var bookings = [];
@@ -609,9 +612,11 @@ function overlaps(day, start, dur){
   });
 }
 
-function slotStarts(dur){
+function slotStarts(day, dur){
   var out = [];
-  for(var t = OPEN_MIN; t + dur <= CLOSE_MIN; t += STEP){
+  var openMin = openMinFor(day);
+  var closeMin = closeMinFor(day);
+  for(var t = openMin; t + dur <= closeMin; t += STEP){
     if(t < BREAK_END && BREAK_START < t + dur) continue; // 休憩時間と重なる枠は除外
     out.push(t);
   }
@@ -642,7 +647,7 @@ function renderSlots(){
   var grid = document.getElementById('slotGrid');
   var emptyNote = document.getElementById('emptyNote');
   grid.innerHTML = '';
-  var starts = slotStarts(duration);
+  var starts = slotStarts(selectedDay, duration);
   var anyAvailable = false;
   starts.forEach(function(t){
     var booked = overlaps(selectedDay, t, duration);
